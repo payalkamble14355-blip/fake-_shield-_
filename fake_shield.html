@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FakeShield — Fake Account Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0d0d14;
+    --surface2: #13131e;
+    --accent: #6c63ff;
+    --accent2: #f857a6;
+    --green: #00e5a0;
+    --blue: #4d9fff;
+    --text: #f5f5ff;
+    --muted: #7070a0;
+    --border: rgba(108,99,255,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 15% 25%, rgba(108,99,255,0.15) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 85% 75%, rgba(248,87,166,0.12) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 40% at 55% 45%, rgba(0,229,160,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 4rem;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #6c63ff, #f857a6);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+
+  nav ul {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  nav ul a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  nav ul a:hover { color: var(--text); }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.4);
+    border-radius: 100px;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 2rem;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 800;
+    line-height: 1.05;
+    max-width: 900px;
+    animation: fadeDown 0.6s ease 0.1s both;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    margin-top: 1.5rem;
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+    animation: fadeDown 0.6s ease 0.2s both;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    animation: fadeDown 0.6s ease 0.3s both;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    padding: 0.85rem 2rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: none;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(108,99,255,0.5);
+  }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.85rem 2rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: none;
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    padding: 2.5rem 2rem;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: rgba(18,18,26,0.5);
+    animation: fadeUp 0.6s ease 0.4s both;
+  }
+
+  .stat-item { text-align: center; }
+
+  .stat-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stat-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .section-sub {
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 560px;
+    margin-bottom: 3rem;
+  }
+
+  /* TIPS GRID */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tip-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .tip-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(108,99,255,0.25);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .tip-card:hover::before { transform: scaleX(1); }
+
+  .tip-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .tip-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+
+  .tip-card p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* AI ANALYZER */
+  #analyzer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 3rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .analyzer-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .analyzer-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .form-group input, .form-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    border-color: rgba(255,60,95,0.5);
+  }
+
+  .form-group select option { background: var(--surface2); }
+
+  .analyze-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    font-family: 'Syne', sans-serif;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .analyze-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(108,99,255,0.5);
+  }
+
+  /* RESULT */
+  .result-box {
+    display: none;
+    margin-top: 2rem;
+    border-radius: 16px;
+    padding: 1.8rem;
+    border: 1px solid var(--border);
+    animation: fadeUp 0.4s ease;
+  }
+
+  .result-box.fake {
+    background: rgba(108,99,255,0.08);
+    border-color: rgba(108,99,255,0.4);
+  }
+
+  .result-box.real {
+    background: rgba(0,229,160,0.08);
+    border-color: rgba(0,229,160,0.3);
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .result-emoji { font-size: 2.5rem; }
+
+  .result-verdict {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+
+  .result-box.fake .result-verdict { color: var(--accent); }
+  .result-box.real .result-verdict { color: var(--green); }
+
+  .result-score {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .score-bar {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 100px;
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1s ease;
+  }
+
+  .fake .score-fill { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .real .score-fill { background: linear-gradient(90deg, var(--green), var(--blue)); }
+
+  .result-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .reason-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+
+  .reason-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .fake .reason-dot { background: var(--accent); }
+  .real .reason-dot { background: var(--green); }
+
+  /* DASHBOARD */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .dash-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .dash-card-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .dash-card-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+  }
+
+  .dash-card-change {
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+  }
+
+  .up { color: var(--accent); }
+  .down { color: var(--green); }
+
+  /* BAR CHART */
+  .chart-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.8rem;
+    height: 150px;
+  }
+
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    transition: height 1s ease;
+    min-height: 4px;
+  }
+
+  .bar-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* PLATFORM BREAKDOWN */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .platform-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .platform-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .platform-info { flex: 1; }
+
+  .platform-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .platform-bar-wrap {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .platform-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .platform-pct {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  footer strong { color: var(--accent); }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    nav ul { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .dashboard-grid { grid-template-columns: 1fr 1fr; }
+    .platform-grid { grid-template-columns: 1fr; }
+    .stats-bar { gap: 2rem; flex-wrap: wrap; }
+    #analyzer { padding: 1.5rem; }
+  }
+
+  .logo-icon {
+    box-shadow: 0 0 18px rgba(108,99,255,0.5);
+  }
+  .hero h1 em {
+    background: linear-gradient(90deg, #6c63ff, #f857a6, #00e5a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-number {
+    background: linear-gradient(90deg, #6c63ff, #f857a6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .tip-card:hover {
+    border-color: rgba(108,99,255,0.35) !important;
+    box-shadow: 0 20px 40px rgba(108,99,255,0.15) !important;
+  }
+  .analyze-btn {
+    background: linear-gradient(135deg, #6c63ff, #f857a6) !important;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6c63ff, #f857a6) !important;
+  }
+  .platform-bar-fill {
+    background: linear-gradient(90deg, #6c63ff, #f857a6) !important;
+  }
+  .score-fill {
+    background: linear-gradient(90deg, #6c63ff, #f857a6) !important;
+  }
+  footer strong { color: #6c63ff !important; }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">🛡️</div>
+    Fake<span>Shield</span>
+  </div>
+  <ul>
+    <li><a href="#tips">Tips</a></li>
+    <li><a href="#check">Analyzer</a></li>
+    <li><a href="#dashboard">Dashboard</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🔍 AI-Powered Fake Account Detection</div>
+  <h1>Protect Yourself From <em>Fake Accounts</em> Online</h1>
+  <p>Learn how to spot fake social media profiles, analyze suspicious accounts, and stay safe from online fraud and impersonation.</p>
+  <div class="hero-cta">
+    <a href="#check" class="btn-primary">Analyze an Account</a>
+    <a href="#tips" class="btn-secondary">See Warning Signs</a>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-number">1.4B+</div>
+    <div class="stat-label">Fake accounts removed in 2023</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">5%</div>
+    <div class="stat-label">Of all social media accounts are fake</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">₹1,500Cr</div>
+    <div class="stat-label">Lost to social media fraud in India</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">72%</div>
+    <div class="stat-label">People can't spot fake accounts</div>
+  </div>
+</div>
+
+<!-- TIPS SECTION -->
+<section id="tips">
+  <div class="reveal">
+    <div class="section-tag">Warning Signs</div>
+    <h2 class="section-title">How to Spot a Fake Account</h2>
+    <p class="section-sub">Fake accounts have specific patterns. Learn these red flags to protect yourself.</p>
+  </div>
+
+  <div class="tips-grid reveal">
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(108,99,255,0.12);">📸</div>
+      <h3>No Profile Picture or Stock Photo</h3>
+      <p>Fake accounts often use no photo, blurry images, or stolen stock photos. Reverse image search the photo to check if it's real.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(248,87,166,0.12);">📅</div>
+      <h3>Very New Account</h3>
+      <p>Accounts created recently with no history of posts are suspicious. Check when the account was created — fake accounts are often brand new.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(77,159,255,0.1);">👥</div>
+      <h3>Weird Follower Ratio</h3>
+      <p>Following 5000 people but only 50 followers? Or 100K followers but only 2 posts? These ratios are major red flags.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(77,159,255,0.1);">📝</div>
+      <h3>Empty or Copy-Paste Bio</h3>
+      <p>Generic bios like "Love life 🌸" or no bio at all. Fake accounts rarely have detailed, personal information in their profile.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(108,99,255,0.12);">🤖</div>
+      <h3>Spam-Like Posting Behavior</h3>
+      <p>Posting the same content repeatedly, posting 50+ times a day, or only sharing promotional content are bot-like behaviors.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(248,87,166,0.12);">💬</div>
+      <h3>Generic or Irrelevant Comments</h3>
+      <p>"Nice post!" or "Great content!" on every photo. Fake accounts leave generic comments to appear active without real engagement.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(77,159,255,0.1);">🔗</div>
+      <h3>Suspicious Links in Bio</h3>
+      <p>Links to unknown websites, shortened URLs, or get-rich-quick schemes are classic signs of scam or spam accounts.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon" style="background: rgba(77,159,255,0.1);">😮</div>
+      <h3>Too Good to Be True</h3>
+      <p>Offering free gifts, lottery wins, or claiming to be a celebrity asking for money? It's almost certainly fake.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AI ANALYZER -->
+<section id="check" style="max-width: 800px;">
+  <div class="reveal">
+    <div class="section-tag">AI Analyzer</div>
+    <h2 class="section-title">Check Any Account</h2>
+    <p class="section-sub">Enter the profile details below and our AI will analyze how suspicious the account looks.</p>
+  </div>
+
+  <div id="analyzer" class="reveal">
+    <div class="analyzer-title">Profile Analyzer</div>
+    <div class="analyzer-sub">Fill in what you know about the account</div>
+
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Username / Handle</label>
+        <input type="text" id="username" placeholder="e.g. @john_doe123">
+      </div>
+      <div class="form-group">
+        <label>Followers Count</label>
+        <input type="number" id="followers" placeholder="e.g. 1200">
+      </div>
+      <div class="form-group">
+        <label>Following Count</label>
+        <input type="number" id="following" placeholder="e.g. 4800">
+      </div>
+      <div class="form-group">
+        <label>Total Posts</label>
+        <input type="number" id="posts" placeholder="e.g. 5">
+      </div>
+      <div class="form-group">
+        <label>Account Age</label>
+        <select id="age">
+          <option value="">Select age</option>
+          <option value="0">Less than 1 month</option>
+          <option value="1">1–6 months</option>
+          <option value="2">6–12 months</option>
+          <option value="3">1–3 years</option>
+          <option value="4">3+ years</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Has Profile Picture?</label>
+        <select id="pfp">
+          <option value="">Select</option>
+          <option value="0">No profile picture</option>
+          <option value="1">Blurry / unclear photo</option>
+          <option value="2">Looks like stock photo</option>
+          <option value="3">Clear personal photo</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Has Bio?</label>
+        <select id="bio">
+          <option value="">Select</option>
+          <option value="0">No bio</option>
+          <option value="1">Generic / copy-paste bio</option>
+          <option value="2">Has personal bio</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Posting Behavior</label>
+        <select id="posting">
+          <option value="">Select</option>
+          <option value="0">Never posts</option>
+          <option value="1">Spam posts (50+ per day)</option>
+          <option value="2">Only shares links/promos</option>
+          <option value="3">Normal posting frequency</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Platform</label>
+        <select id="platform">
+          <option value="">Select platform</option>
+          <option value="instagram">Instagram</option>
+          <option value="facebook">Facebook</option>
+          <option value="twitter">Twitter/X</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="analyze-btn" onclick="analyzeAccount()">🔍 Analyze Account</button>
+
+    <div class="loading-overlay" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Analyzing profile patterns...</div>
+    </div>
+
+    <div class="result-box" id="result">
+      <div class="result-header">
+        <div class="result-emoji" id="result-emoji">⚠️</div>
+        <div>
+          <div class="result-verdict" id="result-verdict">Likely Fake</div>
+          <div class="result-score" id="result-score">Fake Score: 85%</div>
+        </div>
+      </div>
+      <div class="score-bar">
+        <div class="score-fill" id="score-fill" style="width: 0%"></div>
+      </div>
+      <div class="result-reasons" id="result-reasons"></div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+  <div class="reveal">
+    <div class="section-tag">Statistics</div>
+    <h2 class="section-title">Fake Account Dashboard</h2>
+    <p class="section-sub">Global statistics about fake accounts and social media fraud.</p>
+  </div>
+
+  <div class="dashboard-grid reveal">
+    <div class="dash-card">
+      <div class="dash-card-label">Fake Accounts Detected Today</div>
+      <div class="dash-card-value" style="color: var(--accent);">2.4M</div>
+      <div class="dash-card-change up">↑ 12% from yesterday</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">Scam Reports This Week</div>
+      <div class="dash-card-value" style="color: var(--accent2);">18.7K</div>
+      <div class="dash-card-change up">↑ 8% from last week</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-label">Accounts Removed</div>
+      <div class="dash-card-value" style="color: var(--green);">1.1M</div>
+      <div class="dash-card-change down">↓ 3% removal rate</div>
+    </div>
+  </div>
+
+  <div class="chart-container reveal">
+    <div class="chart-title">Monthly Fake Account Detections (2024)</div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+
+  <div class="platform-grid reveal">
+    <div class="platform-item">
+      <div class="platform-icon" style="background: rgba(225,48,108,0.15);">📸</div>
+      <div class="platform-info">
+        <div class="platform-name">Instagram</div>
+        <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:78%"></div></div>
+        <div class="platform-pct">78% of reported fake accounts</div>
+      </div>
+    </div>
+    <div class="platform-item">
+      <div class="platform-icon" style="background: rgba(24,119,242,0.15);">👤</div>
+      <div class="platform-info">
+        <div class="platform-name">Facebook</div>
+        <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:65%"></div></div>
+        <div class="platform-pct">65% of reported fake accounts</div>
+      </div>
+    </div>
+    <div class="platform-item">
+      <div class="platform-icon" style="background: rgba(29,161,242,0.15);">🐦</div>
+      <div class="platform-info">
+        <div class="platform-name">Twitter / X</div>
+        <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:52%"></div></div>
+        <div class="platform-pct">52% of reported fake accounts</div>
+      </div>
+    </div>
+    <div class="platform-item">
+      <div class="platform-icon" style="background: rgba(37,211,102,0.15);">💬</div>
+      <div class="platform-info">
+        <div class="platform-name">WhatsApp</div>
+        <div class="platform-bar-wrap"><div class="platform-bar-fill" style="width:41%"></div></div>
+        <div class="platform-pct">41% of reported fake accounts</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Made with ❤️ by <strong>FakeShield</strong> — Stay Safe Online 🛡️</p>
+  <p style="margin-top: 0.5rem; font-size: 0.75rem;">This tool provides educational awareness only. Always report suspicious accounts to the platform.</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Bar chart
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const data =   [320, 280, 410, 390, 520, 480, 610, 570, 490, 640, 590, 720];
+  const max = Math.max(...data);
+  const colors = ['#ff3c5f','#ff5c7a','#ff7c94','#ff8c42','#ffaa6b','#ffc394',
+                  '#ff3c5f','#ff5c7a','#ff7c94','#ff8c42','#ffaa6b','#ffc394'];
+
+  const chart = document.getElementById('bar-chart');
+  months.forEach((m, i) => {
+    const grp = document.createElement('div');
+    grp.className = 'bar-group';
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.cssText = `background:${colors[i]};height:0%;`;
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-label';
+    lbl.textContent = m;
+    grp.append(bar, lbl);
+    chart.appendChild(grp);
+    setTimeout(() => { bar.style.height = `${(data[i]/max)*100}%`; }, 300 + i * 60);
+  });
+
+  // Analyzer
+  function analyzeAccount() {
+    const followers = parseInt(document.getElementById('followers').value) || 0;
+    const following = parseInt(document.getElementById('following').value) || 0;
+    const posts     = parseInt(document.getElementById('posts').value) || 0;
+    const age       = document.getElementById('age').value;
+    const pfp       = document.getElementById('pfp').value;
+    const bio       = document.getElementById('bio').value;
+    const posting   = document.getElementById('posting').value;
+    const username  = document.getElementById('username').value || 'this account';
+
+    // Show loading
+    document.getElementById('loading').style.display = 'flex';
+    document.getElementById('result').style.display = 'none';
+
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+
+      let score = 0;
+      const reasons = [];
+
+      // Follower/following ratio
+      if (following > 0 && followers / following < 0.05) {
+        score += 25;
+        reasons.push('Follows many people but has very few followers (suspicious ratio)');
+      } else if (following > 0 && followers / following > 50) {
+        score += 10;
+        reasons.push('Extremely high followers vs following — may have bought followers');
+      }
+
+      // Posts
+      if (posts === 0) { score += 20; reasons.push('No posts at all — inactive or bot account'); }
+      else if (posts < 3) { score += 10; reasons.push('Very few posts for an active account'); }
+
+      // Age
+      if (age === '0') { score += 20; reasons.push('Account is less than 1 month old'); }
+      else if (age === '1') { score += 10; reasons.push('Account is relatively new (1–6 months)'); }
+
+      // Profile pic
+      if (pfp === '0') { score += 15; reasons.push('No profile picture'); }
+      else if (pfp === '1') { score += 10; reasons.push('Blurry or unclear profile photo'); }
+      else if (pfp === '2') { score += 12; reasons.push('Profile photo looks like a stock image'); }
+
+      // Bio
+      if (bio === '0') { score += 10; reasons.push('No bio information provided'); }
+      else if (bio === '1') { score += 8; reasons.push('Bio seems generic or copy-pasted'); }
+
+      // Posting
+      if (posting === '0') { score += 10; reasons.push('Account never posts content'); }
+      else if (posting === '1') { score += 20; reasons.push('Spam-like posting behavior detected'); }
+      else if (posting === '2') { score += 15; reasons.push('Only shares promotional links or content'); }
+
+      // Username pattern
+      if (/\d{4,}/.test(username)) { score += 5; reasons.push('Username contains many numbers (bot pattern)'); }
+
+      score = Math.min(score, 99);
+
+      const isFake = score >= 40;
+      const resultBox = document.getElementById('result');
+      resultBox.className = `result-box ${isFake ? 'fake' : 'real'}`;
+      resultBox.style.display = 'block';
+
+      document.getElementById('result-emoji').textContent = isFake ? '🚨' : '✅';
+      document.getElementById('result-verdict').textContent = isFake
+        ? (score > 70 ? 'Very Likely Fake!' : 'Possibly Fake')
+        : 'Looks Legitimate';
+      document.getElementById('result-score').textContent = `Suspicion Score: ${score}%`;
+
+      const fill = document.getElementById('score-fill');
+      fill.style.width = '0%';
+      setTimeout(() => { fill.style.width = score + '%'; }, 100);
+
+      const reasonsEl = document.getElementById('result-reasons');
+      reasonsEl.innerHTML = '';
+
+      if (reasons.length === 0) {
+        reasons.push('No major red flags found');
+        reasons.push('Account appears to have normal activity');
+        reasons.push('Profile details seem genuine');
+      }
+
+      reasons.forEach(r => {
+        reasonsEl.innerHTML += `
+          <div class="reason-item">
+            <div class="reason-dot"></div>
+            <span>${r}</span>
+          </div>`;
+      });
+
+    }, 1800);
+  }
+</script>
+</body>
+</html>
